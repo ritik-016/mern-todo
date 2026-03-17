@@ -9,6 +9,8 @@ import axios from "axios";
 function App() {
   const [todos, setTodos] = useState([]);
   const [newTodo, setNewTodo] = useState("");
+  const [editingTodo, setEditingTodo] = useState(null);
+  const [editedText, setEditedText] = useState("");
 
   const addTodo = async (e) => {
     e.preventDefault();
@@ -26,6 +28,7 @@ function App() {
     const fetchTodos = async () => {
       try {
         const response = await axios.get("/api/todos");
+        console.log(response.data);
         setTodos(response.data);
       } catch (error) {
         console.error("Error fetching todos:", error);
@@ -34,6 +37,11 @@ function App() {
 
     fetchTodos();
   }, []);
+
+  const startEditing = (todo) => {
+    setEditingTodo(todo._id);
+    setEditedText(todo.text);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
@@ -68,7 +76,38 @@ function App() {
           ) : (
             <div>
               {todos.map((todo) => (
-                <div key={todo._id}>{todo.text}</div>
+                <div key={todo._id}>
+                  {editingTodo === todo._id ? (
+                    <div className="flex items-center gap-x-3">
+                      <input
+                        className="flex-1 rounded-xl p-3 border border-gray-200 outline-none focus:ring-2 focus:ring-blue-300 text-gray-700 shadow-inner"
+                        type="text"
+                        value={editedText}
+                        onChange={(e) => setEditedText(e.target.value)}
+                      />
+                      <div className="flex gap-x-2">
+                        <button className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 cursor-pointer">
+                          <MdOutlineDone />
+                        </button>
+                        <button onClick={() => setEditingTodo(null)}>
+                          <IoClose />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <div>
+                        {todo.text}
+                        <button onClick={() => startEditing(todo)}>
+                          <MdModeEditOutline />
+                        </button>
+                        <button>
+                          <FaTrash />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           )}
