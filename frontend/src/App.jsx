@@ -43,11 +43,44 @@ function App() {
     setEditedText(todo.text);
   };
 
+  const saveEdit = async (id) => {
+    try {
+      const response = await axios.patch(`/api/todos/${id}`, {
+        text: editedText,
+      });
+      setTodos(todos.map((todo) => (todo._id === id ? response.data : todo)));
+      setEditingTodo(null);
+    } catch (error) {
+      console.log("Error editing todo:", error);
+    }
+  };
+
+  const deleteTodo = async (id) => {
+    try {
+      await axios.delete(`/api/todos/${id}`);
+      setTodos(todos.filter((todo) => todo._id !== id));
+    } catch (error) {
+      console.log("Error deleting todo:", error);
+    }
+  };
+
+  const toggleTodo = async (id) => {
+    try {
+      const todo = todos.find((t) => t._id === id);
+      const response = await axios.patch(`/api/todos/${id}`, {
+        completed: !todo.completed,
+      });
+      setTodos(todos.map((t) => (t._id === id ? response.data : t)));
+    } catch (error) {
+      console.log("Error toggling todo:", error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-8">
         <div>
-          <h1 className="text-4xl font-bold text-gray-800 mb-6">
+          <h1 className="text-4xl font-bold text-gray-800 mb-6 text-center">
             Task Manager
           </h1>
         </div>
@@ -70,11 +103,11 @@ function App() {
             Add Task
           </button>
         </form>
-        <div>
+        <div className="mt-4">
           {todos.length === 0 ? (
             <div></div>
           ) : (
-            <div>
+            <div className="flex flex-col gap-4">
               {todos.map((todo) => (
                 <div key={todo._id}>
                   {editingTodo === todo._id ? (
@@ -86,24 +119,48 @@ function App() {
                         onChange={(e) => setEditedText(e.target.value)}
                       />
                       <div className="flex gap-x-2">
-                        <button className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 cursor-pointer">
+                        <button
+                          onClick={() => saveEdit(todo._id)}
+                          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 cursor-pointer"
+                        >
                           <MdOutlineDone />
                         </button>
-                        <button onClick={() => setEditingTodo(null)}>
+                        <button
+                          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-red-500 cursor-pointer"
+                          onClick={() => setEditingTodo(null)}
+                        >
                           <IoClose />
                         </button>
                       </div>
                     </div>
                   ) : (
                     <div>
-                      <div>
-                        {todo.text}
-                        <button onClick={() => startEditing(todo)}>
-                          <MdModeEditOutline />
-                        </button>
-                        <button>
-                          <FaTrash />
-                        </button>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-x-4 overflow-hidden">
+                          <button
+                            onClick={() => toggleTodo(todo._id)}
+                            className={`shrink-0 h-6 w-6 border rounded-full flex items-center justify-center ${todo.completed ? "bg-green-500 border-green-500" : "border-gray-300 hover:border-blue-400"}`}
+                          >
+                            {todo.completed && <MdOutlineDone />}
+                          </button>
+                          <span className="text-gray-800 font-medium truncate">
+                            {todo.text}
+                          </span>
+                        </div>
+                        <div className="flex gap-x-2">
+                          <button
+                            className="p-2 text-blue-500 hover:text-blue-700 rounded-lg hover:bg-blue-50 duration-200"
+                            onClick={() => startEditing(todo)}
+                          >
+                            <MdModeEditOutline />
+                          </button>
+                          <button
+                            onClick={() => deleteTodo(todo._id)}
+                            className="p-2 text-red-500 hover:text-red-700 rounded-lg hover:bg-red-50 duration-200"
+                          >
+                            <FaTrash />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}
